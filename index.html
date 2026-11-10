@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DREAMERS 굿즈 무인판매</title>
+<style>
+:root{--bg:#faf7f1;--ink:#1c1c1c;--blue:#7b86d0;--blue-d:#5a65b8;--line:#e6e1d6;--card:#fff}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#18181c;--ink:#f3f1ea;--line:#33333a;--card:#232329;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#18181c;--ink:#f3f1ea;--line:#33333a;--card:#232329;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;padding-block:0 96px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{padding:28px 0 8px;text-align:center}
+header small{color:var(--blue);font-weight:600;letter-spacing:.05em}
+h1{margin:4px 0;font-size:28px}
+header p{margin:0;opacity:.7;font-size:14px}
+main{max-width:640px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-top:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.card .ph{aspect-ratio:1;object-fit:cover;width:100%;background:var(--blue);display:grid;place-items:center;color:#fff;font-weight:700}
+.card .b{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.name{font-weight:700}.price{opacity:.75;font-size:15px}
+.qty{margin-top:auto;display:flex;align-items:center;justify-content:space-between}
+button{font:inherit;cursor:pointer;border:0}
+.qty button{width:40px;height:40px;border-radius:50%;background:var(--line);color:var(--ink);font-size:20px;font-weight:700}
+.qty button.add{background:var(--blue);color:#fff}
+.qty span{min-width:28px;text-align:center;font-weight:700}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--bg);border-top:1px solid var(--line)}
+.btn{display:block;width:100%;max-width:640px;margin:0 auto;padding:16px;border-radius:12px;background:var(--blue);color:#fff;font-weight:700;font-size:17px}
+.btn:disabled{background:var(--line);color:#999;cursor:default}
+.btn.ghost{background:var(--line);color:var(--ink);margin-top:8px}
+.sheet{display:none;position:fixed;inset:0;background:var(--bg);overflow:auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));z-index:5}
+.sheet.on{display:block}
+.sheet>div{max-width:640px;margin:0 auto}
+.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line)}
+.total{font-size:22px;font-weight:800;color:var(--blue-d);justify-content:space-between;display:flex;margin:14px 0}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+.acct{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0}
+.acct b{font-size:18px;word-break:break-all}
+.cp{background:var(--blue);color:#fff;border-radius:8px;padding:8px 12px;font-size:14px;white-space:nowrap}
+ol{padding-left:20px;margin:8px 0}
+.done{text-align:center;padding-top:40px}.done .ck{font-size:56px}
+.back{background:none;color:var(--blue-d);padding:8px 0;font-weight:600}
+</style>
+</head>
+<body>
+
+<header>
+  <small>2026 한동대학교 창조문화축제</small>
+  <h1>DREAMERS 굿즈</h1>
+  <p>담고 → 계좌이체 → 가져가세요</p>
+</header>
+<main><div class="grid" id="grid"></div></main>
+
+<div class="bar"><button class="btn" id="go" disabled>장바구니가 비었어요</button></div>
+
+<div class="sheet" id="pay"><div>
+  <button class="back" id="back">← 더 담기</button>
+  <h2>주문 확인</h2>
+  <div id="lines"></div>
+  <div class="total"><span>총 금액</span><span id="sum"></span></div>
+  <div class="box">
+    <div style="font-weight:700;margin-bottom:4px">이 계좌로 보내주세요</div>
+    <div class="acct"><span id="bank"></span></div>
+    <div class="acct"><b id="acct"></b><button class="cp" data-c="acct">계좌 복사</button></div>
+    <div class="acct"><span>예금주 <b id="holder"></b></span></div>
+    <div class="acct"><b id="amt"></b><button class="cp" data-c="amt">금액 복사</button></div>
+  </div>
+  <ol>
+    <li>위 <b>금액 그대로</b> 이체해 주세요.</li>
+    <li>이체 후 아래 버튼을 눌러 주세요.</li>
+    <li>고른 상품을 가져가시면 끝!</li>
+  </ol>
+  <button class="btn" id="paid">이체 완료했어요</button>
+</div></div>
+
+<div class="sheet" id="fin"><div class="done">
+  <div class="ck">🎉</div>
+  <h2>감사합니다!</h2>
+  <p>아래 상품을 가져가세요.</p>
+  <div class="box" id="finlines" style="text-align:left"></div>
+  <div class="total"><span>이체 금액</span><span id="finsum"></span></div>
+  <button class="btn ghost" id="again">처음으로</button>
+</div></div>
+
+<script>
+// ↓ 여기만 수정하세요 (계좌 정보 / 상품 목록)
+const BANK={bank:"토스뱅크",no:"1000-3968-0944",holder:"이예빈"};
+const ITEMS=[
+  {id:"eco",name:"에코백",price:9000,img:"img/tote.jpg"},
+  {id:"mug",name:"머그컵",price:5000,img:"img/cup.jpg"},
+  {id:"pin",name:"뱃지",price:2000,img:"img/pin.jpg"},
+  {id:"stk",name:"스티커팩",price:2000,img:"img/sticker.jpg"},
+  {id:"bm",name:"책갈피 (4종)",price:1000,img:"img/bookmark.jpg"},
+  {id:"candy",name:"사탕",price:500,img:"img/candy.jpg"},
+  {id:"key",name:"키링",price:1000,img:""},
+];
+
+const $=id=>document.getElementById(id), won=n=>n.toLocaleString("ko-KR")+"원";
+let cart=JSON.parse(localStorage.getItem("cart")||"{}");
+const save=()=>{try{localStorage.setItem("cart",JSON.stringify(cart))}catch(e){}};
+const count=()=>Object.values(cart).reduce((a,b)=>a+b,0);
+const total=()=>ITEMS.reduce((s,i)=>s+i.price*(cart[i.id]||0),0);
+const picked=()=>ITEMS.filter(i=>cart[i.id]);
+
+$("grid").innerHTML=ITEMS.map(i=>`<div class="card">
+  ${i.img?`<img class="ph" src="${i.img}" alt="${i.name}">`:`<div class="ph">DREAMERS</div>`}
+  <div class="b"><div class="name">${i.name}</div><div class="price">${won(i.price)}</div>
+  <div class="qty"><button data-d="-1" data-id="${i.id}" aria-label="빼기">−</button><span id="q-${i.id}">0</span><button class="add" data-d="1" data-id="${i.id}" aria-label="담기">+</button></div></div></div>`).join("");
+
+function render(){
+  ITEMS.forEach(i=>$("q-"+i.id).textContent=cart[i.id]||0);
+  const n=count(),b=$("go");
+  b.disabled=!n;
+  b.textContent=n?`${n}개 · ${won(total())} 결제하기`:"장바구니가 비었어요";
+}
+$("grid").onclick=e=>{
+  const b=e.target.closest("button");if(!b)return;
+  const id=b.dataset.id,q=Math.max(0,(cart[id]||0)+ +b.dataset.d);
+  q?cart[id]=q:delete cart[id];save();render();
+};
+const lines=()=>picked().map(i=>`<div class="row"><span>${i.name} × ${cart[i.id]}</span><span>${won(i.price*cart[i.id])}</span></div>`).join("");
+
+$("go").onclick=()=>{
+  $("lines").innerHTML=lines();
+  $("sum").textContent=$("amt").textContent=won(total());
+  $("bank").textContent=BANK.bank;$("acct").textContent=BANK.no;$("holder").textContent=BANK.holder;
+  $("pay").classList.add("on");
+};
+$("back").onclick=()=>{armed=false;$("paid").textContent="이체 완료했어요";$("pay").classList.remove("on")};
+document.querySelectorAll(".cp").forEach(b=>b.onclick=()=>{
+  const t=b.dataset.c==="amt"?String(total()):BANK.no.replace(/\D/g,"");
+  navigator.clipboard?.writeText(t);
+  b.textContent="복사됨 ✓";setTimeout(()=>b.textContent=b.dataset.c==="amt"?"금액 복사":"계좌 복사",1500);
+});
+let armed=false;
+$("paid").onclick=()=>{
+  if(!armed){armed=true;$("paid").textContent=`${won(total())} 이체했어요 (한 번 더 눌러 완료)`;return}
+  armed=false;$("paid").textContent="이체 완료했어요";
+  $("finlines").innerHTML=lines();$("finsum").textContent=won(total());
+  cart={};save();render();
+  $("pay").classList.remove("on");$("fin").classList.add("on");
+};
+$("again").onclick=()=>$("fin").classList.remove("on");
+render();
+</script>
+</body>
+</html>
